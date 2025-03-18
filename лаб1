@@ -145,7 +145,6 @@ int main() {
     ProductList list;
     int choice;
 
-    while (true) {
         cout << "Меню:\n";
         cout << "1. Напечатать список\n";
         cout << "2. Добавить по индексу\n";
@@ -216,7 +215,7 @@ int main() {
                 default:
                     cout << "Неверный выбор.\n";
             }
-        } 
+        
     
 
     return 0;
