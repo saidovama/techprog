@@ -29,6 +29,7 @@ public:
     void printAll();
     void addAtIndex(int index, Product* product);
     void addToEnd(Product* product);
+    void addToStart(Product* product);
     void removeAtIndex(int index);
     void addAfterIndex(int index, Product* product); 
 };
@@ -57,6 +58,11 @@ void ProductList::addAtIndex(int index, Product* product) {
         return;
     }
     addAfterIndex(index - 1, product); 
+}
+void ProductList::addToStart(Product* product) {
+    Node* newNode = new Node (product);
+    newNode->next = head;
+    head=newNode;
 }
 
 void ProductList::addToEnd(Product* product) {
