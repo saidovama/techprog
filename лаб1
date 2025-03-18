@@ -31,7 +31,6 @@ public:
     void addToEnd(Product* product);
     void removeAtIndex(int index);
     void addAfterIndex(int index, Product* product); 
-    void addBeforeIndex(int index, Product* product); 
 };
 
 ProductList::~ProductList() {
@@ -115,32 +114,6 @@ void ProductList::addAfterIndex(int index, Product* product) {
     current->next = newNode;
 }
 
-void ProductList::addBeforeIndex(int index, Product* product) {
-    if (index < 0) throw out_of_range("Индекс вне диапазона");
-
-    Node* newNode = new Node(product);
-    if (index == 0) {newNode->next = head;
-        head = newNode;
-        return;
-    }
-
-    Node* current = head;
-    Node* prev = nullptr;
-    int currentIndex = 0;
-
-    while (current && currentIndex < index) {
-        prev = current;
-        current = current->next;
-        currentIndex++;
-    }
-
-    if (!current && currentIndex != index) throw out_of_range("Индекс вне диапазона");
-
-
-    newNode->next = current;
-    prev->next = newNode;
-}
-
 int main() {
     ProductList list;
     int choice;
@@ -151,8 +124,7 @@ int main() {
         cout << "3. Добавить в конец\n";
         cout << "4. Добавить в начало\n";
         cout << "5. Удалить по индексу\n";
-        cout << "6. Добавить после индекса\n"; 
-        cout << "7. Добавить перед индексом\n"; 
+        cout << "6. Добавить после индекса\n";  
         cout << "0. Выход\n";
         cout << "Выбор: ";
 
@@ -202,16 +174,7 @@ int main() {
                     list.addAfterIndex(index, new Product(id, price, name));
                     break;
                 }
-                case 6: { // Добавление перед индексом
-                    int index, id;
-                    double price;
-                    string name;
-                    cout << "Введите индекс, ID, цену, название: ";
-                    cin >> index >> id >> price >> ws;
-                    getline(cin, name);
-                    list.addBeforeIndex(index, new Product(id, price, name));
-                    break;
-                }
+            
                 default:
                     cout << "Неверный выбор.\n";
             }
