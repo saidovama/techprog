@@ -1,0 +1,224 @@
+#include <iostream>
+#include <string>
+
+using namespace std;
+
+class Product {
+public:
+    int id;
+    double price;
+    string name;
+
+    Product(int i, double p, string n) : id(i), price(p), name(n) {}
+};
+
+class Node {
+public:
+    Product* data;
+    Node* next;
+    Node(Product* product) : data(product), next(nullptr) {}
+};
+
+class ProductList {
+private:
+    Node* head;
+public:
+    ProductList() : head(nullptr) {}
+    ~ProductList(); // Деструктор для освобождения памяти
+
+    void printAll();
+    void addAtIndex(int index, Product* product);
+    void addToEnd(Product* product);
+    void removeAtIndex(int index);
+    void addAfterIndex(int index, Product* product); 
+    void addBeforeIndex(int index, Product* product); 
+};
+
+ProductList::~ProductList() {
+    Node* current = head;
+    while (current != nullptr) {
+        Node* next = current->next;
+        delete current->data;
+        delete current;
+        current = next;
+    }
+}
+
+void ProductList::printAll() {
+    Node* temp = head;
+    while (temp) {
+        cout << "ID: " << temp->data->id << ", Name: " << temp->data->name << ", Price: " << temp->data->price << endl;
+        temp = temp->next;
+    }
+}
+
+void ProductList::addAtIndex(int index, Product* product) {
+    if (index <= 0) {
+        addToStart(product);
+        return;
+    }
+    addAfterIndex(index - 1, product); 
+}
+
+void ProductList::addToEnd(Product* product) {
+    Node* newNode = new Node(product);
+    if (!head) {
+        head = newNode;
+        return;
+    }
+    Node* temp = head;
+    while (temp->next)
+        temp = temp->next;
+    temp->next = newNode;
+}
+
+
+void ProductList::removeAtIndex(int index) {
+    if (!head) return;
+    if (index == 0) {
+        Node* temp = head;
+        head = head->next;
+        delete temp->data;
+        delete temp;
+        return;
+    }
+    Node* temp = head;
+    for (int i = 0; temp->next && i < index - 1; i++)
+        temp = temp->next;
+    if (!temp->next) return;
+    Node* toDelete = temp->next;
+    temp->next = temp->next->next;
+    delete toDelete->data;
+    delete toDelete;
+}
+
+void ProductList::addAfterIndex(int index, Product* product) {
+    if (index < 0) throw out_of_range("Индекс вне диапазона");
+
+    Node* newNode = new Node(product);
+    Node* current = head;
+    int currentIndex = 0;
+
+    if (!head) { 
+        head = newNode;
+        return;
+    }
+
+    while (current && currentIndex < index) {
+        current = current->next;
+        currentIndex++;
+    }
+
+    if (!current && currentIndex != index) throw out_of_range("Индекс вне диапазона");
+
+    newNode->next = current->next;
+    current->next = newNode;
+}
+
+void ProductList::addBeforeIndex(int index, Product* product) {
+    if (index < 0) throw out_of_range("Индекс вне диапазона");
+
+    Node* newNode = new Node(product);
+    if (index == 0) {newNode->next = head;
+        head = newNode;
+        return;
+    }
+
+    Node* current = head;
+    Node* prev = nullptr;
+    int currentIndex = 0;
+
+    while (current && currentIndex < index) {
+        prev = current;
+        current = current->next;
+        currentIndex++;
+    }
+
+    if (!current && currentIndex != index) throw out_of_range("Индекс вне диапазона");
+
+
+    newNode->next = current;
+    prev->next = newNode;
+}
+
+int main() {
+    ProductList list;
+    int choice;
+
+    while (true) {
+        cout << "Меню:\n";
+        cout << "1. Напечатать список\n";
+        cout << "2. Добавить по индексу\n";
+        cout << "3. Добавить в конец\n";
+        cout << "4. Добавить в начало\n";
+        cout << "5. Удалить по индексу\n";
+        cout << "6. Добавить после индекса\n"; // Новая опция
+        cout << "7. Добавить перед индексом\n"; // Новая опция
+        cout << "0. Выход\n";
+        cout << "Выбор: ";
+
+        cin >> choice;
+
+        try {
+            switch (choice) {
+                case 0:
+                    return 0;
+                case 1:
+                    list.printAll();
+                    break;
+                case 2: {
+                    int index, id;
+                    double price;
+                    string name;
+                    cout << "Введите индекс, ID, цену, название: ";
+                    cin >> index >> id >> price >> ws;
+                    getline(cin, name);
+                    list.addAtIndex(index, new Product(id, price, name));
+                    break;
+                }
+                case 3: {
+                    int id;
+                    double price;
+                    string name;
+                    cout << "Введите ID, цену, название: ";
+                    cin >> id >> price >> ws;
+                    getline(cin, name);
+                    list.addToEnd(new Product(id, price, name));
+                    break;
+                }
+                case 4: {
+                    int index;
+                    cout << "Введите индекс: ";
+                    cin >> index;
+                    list.removeAtIndex(index);
+                    break;
+                }
+                case 5: { // Добавление после индекса
+                    int index, id;
+                    double price;
+                    string name;
+                    cout << "Введите индекс, ID, цену, название: ";
+                    cin >> index >> id >> price >> ws;
+                    getline(cin, name);
+                    list.addAfterIndex(index, new Product(id, price, name));
+                    break;
+                }
+                case 6: { // Добавление перед индексом
+                    int index, id;
+                    double price;
+                    string name;
+                    cout << "Введите индекс, ID, цену, название: ";
+                    cin >> index >> id >> price >> ws;
+                    getline(cin, name);
+                    list.addBeforeIndex(index, new Product(id, price, name));
+                    break;
+                }
+                default:
+                    cout << "Неверный выбор.\n";
+            }
+        } 
+    }
+
+    return 0;
+}
+
