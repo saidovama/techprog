@@ -159,7 +159,7 @@ int main() {
 
         cin >> choice;
 
-        try {
+        
             switch (choice) {
                 case 0:
                     return 0;
@@ -217,7 +217,7 @@ int main() {
                     cout << "Неверный выбор.\n";
             }
         } 
-    }
+    
 
     return 0;
 }
