@@ -1,0 +1,145 @@
+#include <iostream>
+#include <string>
+
+class Product {
+public:
+    std::string name;
+    int quantity;
+    double price;
+
+    Product(std::string n, int q, double p) : name(n), quantity(q), price(p) {}
+};
+
+class Node {
+public:
+    Product data;
+    Node* next;
+
+    Node(Product product) : data(product), next(nullptr) {}
+};
+
+class SinglyLinkedList {
+private:
+    Node* head;
+
+public:
+    SinglyLinkedList() : head(nullptr) {}
+
+    ~SinglyLinkedList() {
+        while (head != nullptr) {
+            Node* temp = head;
+            head = head->next;
+            delete temp;
+        }
+    }
+
+    void addToEnd(Product product) {
+        Node* newNode = new Node(product);
+        if (!head) {
+            head = newNode;
+            return;
+        }
+        Node* temp = head;
+        while (temp->next) {
+            temp = temp->next;
+        }
+        temp->next = newNode;
+    }
+
+    void addAfterIndex(int index, Product product) {
+        Node* newNode = new Node(product);
+        if (index == 0) {
+            newNode->next = head;
+            head = newNode;
+            return;
+        }
+
+        Node* temp = head;
+        for (int i = 0; temp != nullptr && i < index; i++) {
+            temp = temp->next;
+        }
+        if (temp != nullptr) {
+            newNode->next = temp->next;
+            temp->next = newNode;
+        }
+    }
+
+    void addBeforeIndex(int index, Product product) {
+        Node* newNode = new Node(product);
+        if (index == 0) {
+            newNode->next = head;
+            head = newNode;
+            return;
+        }
+
+        Node* temp = head;
+        for (int i = 0; temp != nullptr && i < index - 1; i++) {
+            temp = temp->next;
+        }
+        if (temp != nullptr) {
+            newNode->next = temp->next;
+            temp->next = newNode;
+        }
+    }
+
+    void deleteByIndex(int index) {
+        if (head == nullptr) return;
+        Node* temp = head;
+
+        if (index == 0) {
+            head = head->next;
+            delete temp;
+            return;
+        }
+
+        for (int i = 0; temp != nullptr && i < index - 1; i++) {
+            temp = temp->next;
+        }
+        if (temp == nullptr || temp->next == nullptr) return;
+
+        Node* next = temp->next->next;
+        delete temp->next;
+        temp->next = next;
+    }
+
+    void printList() {
+        Node* temp = head;
+        while (temp != nullptr) {
+            std::cout << "Product Name: " << temp->data.name 
+                      << ", Quantity: " << temp->data.quantity 
+                      << ", Price: " << temp->data.price << std::endl;
+            temp = temp->next;
+        }
+    }
+};
+
+int main() {
+    SinglyLinkedList list;
+
+    Product product1("Apple", 10, 1.5);
+    Product product2("Banana", 20, 2.5);
+    Product product3("Cherry", 15, 3.5);
+
+    list.addToEnd(product1);
+    list.addToEnd(product2);
+    list.addToEnd(product3);
+
+    std::cout << "Initial list:" << std::endl;
+    list.printList();
+
+    Product product4("Date", 25, 4.5);
+    list.addAfterIndex(1, product4);
+    std::cout << "\nAfter adding Date after index 1:" << std::endl;
+    list.printList();
+
+    Product product5("Elderberry", 30, 5.5);
+    list.addBeforeIndex(2, product5);
+    std::cout << "\nAfter adding Elderberry before index 2:" << std::endl;
+    list.printList();
+
+    list.deleteByIndex(3);
+    std::cout << "\nAfter deleting element at index 3:" << std::endl;
+    list.printList();
+
+    return 0;
+}
