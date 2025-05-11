@@ -1,82 +1,101 @@
 #include <iostream>
+#include <stdexcept>
 using namespace std;
 
+// Класс "Вектор"
 class vect {
 private:
-    int dim;       
-    double* b;     
-    int num;       
-    static int count; 
+    int dim;       // Размерность вектора
+    double* b;     // Динамический массив
+    int num;       // Уникальный номер объекта
+    static int count;
 
 public:
-    
-    vect() : dim(0), b(nullptr) {
+    // Конструкторы
+    vect(int d = 0) : dim(d), b(dim ? new double[dim]{} : nullptr) {
         num = ++count;
-        cout << "Вектор #" << num << " создан (по умолчанию)." << endl;
+        cout << "Vector #" << num << " created (dim = " << dim << ")" << endl;
     }
 
-    vect(int d) : dim(d) {
-        b = new double[dim]{0};
+    vect(const vect& v) : dim(v.dim), b(dim ? new double[dim] : nullptr) {
+        for (int i = 0; i < dim; ++i) b[i] = v.b[i];
         num = ++count;
-        cout << "Вектор #" << num << " создан (размерность " << dim << ")." << endl;
+        cout << "Vector #" << num << " copied from #" << v.num << endl;
     }
 
-  
-    vect(const vect& v) : dim(v.dim) {
-        b = new double[dim];
-        for (int i = 0; i < dim; i++) b[i] = v.b[i];
-        num = ++count;
-        cout << "Вектор #" << num << " создан (копия вектора #" << v.num << ")." << endl;
-    }
-
+    // Деструктор
     ~vect() {
         delete[] b;
-        cout << "Вектор #" << num << " удален." << endl;
+        cout << "Vector #" << num << " destroyed" << endl;
     }
 
+    // Оператор присваивания
     vect& operator=(const vect& v) {
         if (this != &v) {
             delete[] b;
             dim = v.dim;
             b = new double[dim];
-            for (int i = 0; i < dim; i++) b[i] = v.b[i];
+            for (int i = 0; i < dim; ++i) b[i] = v.b[i];
         }
-        cout << "Вектор #" << num << " = вектору #" << v.num << "." << endl;
+        cout << "Vector #" << num << " = Vector #" << v.num << endl;
         return *this;
     }
 
-  
-    vect operator+(const vect& v) {
+    // Операторы векторной алгебры
+    vect operator+(const vect& v) const {
+        check_dim(v);
         vect res(dim);
-        for (int i = 0; i < dim; i++) res.b[i] = b[i] + v.b[i];
-        cout << "Вектор #" << num << " + вектор #" << v.num << " = вектор #" << res.num << "." << endl;
+        for (int i = 0; i < dim; ++i) res.b[i] = b[i] + v.b[i];
+        cout << "Vector #" << num << " + Vector #" << v.num << " = Vector #" << res.num << endl;
         return res;
     }
 
-    
-    vect operator*(double k) {
+    vect operator-(const vect& v) const {
+        check_dim(v);
         vect res(dim);
-        for (int i = 0; i < dim; i++) res.b[i] = b[i] * k;
-        cout << "Вектор #" << num << " * " << k << " = вектор #" << res.num << "." << endl;
+        for (int i = 0; i < dim; ++i) res.b[i] = b[i] - v.b[i];
+        cout << "Vector #" << num << " - Vector #" << v.num << " = Vector #" << res.num << endl;
         return res;
     }
 
-  
+    vect operator-() const {
+        vect res(dim);
+        for (int i = 0; i < dim; ++i) res.b[i] = -b[i];
+        cout << "-Vector #" << num << " = Vector #" << res.num << endl;
+        return res;
+    }
+
+    double operator*(const vect& v) const { // Скалярное произведение
+        check_dim(v);
+        double sum = 0;
+        for (int i = 0; i < dim; ++i) sum += b[i] * v.b[i];
+        cout << "Vector #" << num << " * Vector #" << v.num << " = scalar " << sum << endl;
+        return sum;
+    }
+
+    vect operator*(double k) const { // Умножение на скаляр
+        vect res(dim);
+        for (int i = 0; i < dim; ++i) res.b[i] = b[i] * k;
+        cout << "Vector #" << num << " * " << k << " = Vector #" << res.num << endl;
+        return res;
+    }
+
     friend vect operator*(double k, const vect& v);
+
+private:
+    void check_dim(const vect& v) const {
+        if (dim != v.dim) throw invalid_argument("Vector dimension mismatch!");
+    }
 };
 
-
 vect operator*(double k, const vect& v) {
-    vect res(v.dim);
-    for (int i = 0; i < v.dim; i++) res.b[i] = v.b[i] * k;
-    cout << k << " * вектор #" << v.num << " = вектор #" << res.num << "." << endl;
-    return res;
+    return v * k;
 }
 
 int vect::count = 0;
 
+// Класс "Матрица"
 class matr {
-   
 private:
     int rows, cols;
     double** a;
@@ -84,27 +103,130 @@ private:
     static int count;
 
 public:
-    matr(int r, int c) : rows(r), cols(c) {
-        a = new double*[rows];
-        for (int i = 0; i < rows; i++) a[i] = new double[cols]{0};
+    matr(int r, int c) : rows(r), cols(c), a(new double*[rows]) {
+        for (int i = 0; i < rows; ++i) {
+            a[i] = new double[cols]{};
+        }
         num = ++count;
-        cout << "Матрица #" << num << " создана (" << rows << "x" << cols << ")." << endl;
+        cout << "Matrix #" << num << " created (" << rows << "x" << cols << ")" << endl;
+    }
+
+    matr(const matr& m) : rows(m.rows), cols(m.cols), a(new double*[rows]) {
+        for (int i = 0; i < rows; ++i) {
+            a[i] = new double[cols];
+            for (int j = 0; j < cols; ++j) a[i][j] = m.a[i][j];
+        }
+        num = ++count;
+        cout << "Matrix #" << num << " copied from #" << m.num << endl;
     }
 
     ~matr() {
-        for (int i = 0; i < rows; i++) delete[] a[i];
+        for (int i = 0; i < rows; ++i) delete[] a[i];
         delete[] a;
-        cout << "Матрица #" << num << " удалена." << endl;
+        cout << "Matrix #" << num << " destroyed" << endl;
+    }
+
+    matr& operator=(const matr& m) {
+        if (this != &m) {
+            for (int i = 0; i < rows; ++i) delete[] a[i];
+            delete[] a;
+            rows = m.rows;
+            cols = m.cols;
+            a = new double*[rows];
+            for (int i = 0; i < rows; ++i) {
+                a[i] = new double[cols];
+                for (int j = 0; j < cols; ++j) a[i][j] = m.a[i][j];
+            }
+        }
+        cout << "Matrix #" << num << " = Matrix #" << m.num << endl;
+        return *this;
+    }
+
+    matr operator+(const matr& m) const {
+        check_dim(m);
+        matr res(rows, cols);
+        for (int i = 0; i < rows; ++i)
+            for (int j = 0; j < cols; ++j)
+                res.a[i][j] = a[i][j] + m.a[i][j];
+        cout << "Matrix #" << num << " + Matrix #" << m.num << " = Matrix #" << res.num << endl;
+        return res;
+    }
+
+    matr operator-(const matr& m) const {
+        check_dim(m);
+        matr res(rows, cols);
+        for (int i = 0; i < rows; ++i)
+            for (int j = 0; j < cols; ++j)
+                res.a[i][j] = a[i][j] - m.a[i][j];
+        cout << "Matrix #" << num << " - Matrix #" << m.num << " = Matrix #" << res.num << endl;
+        return res;
+    }
+
+    matr operator-() const {
+        matr res(rows, cols);
+        for (int i = 0; i < rows; ++i)
+            for (int j = 0; j < cols; ++j)
+                res.a[i][j] = -a[i][j];
+        cout << "-Matrix #" << num << " = Matrix #" << res.num << endl;
+        return res;
+    }
+
+    matr operator*(const matr& m) const {
+        if (cols != m.rows) throw invalid_argument("Matrix multiplication dimensions mismatch!");
+        matr res(rows, m.cols);
+        for (int i = 0; i < rows; ++i)
+            for (int j = 0; j < m.cols; ++j)
+                for (int k = 0; k < cols; ++k)
+                    res.a[i][j] += a[i][k] * m.a[k][j];
+        cout << "Matrix #" << num << " * Matrix #" << m.num << " = Matrix #" << res.num << endl;
+        return res;
+    }
+
+    matr operator*(double k) const {
+        matr res(rows, cols);
+        for (int i = 0; i < rows; ++i)
+            for (int j = 0; j < cols; ++j)
+                res.a[i][j] = a[i][j] * k;
+        cout << "Matrix #" << num << " * " << k << " = Matrix #" << res.num << endl;
+        return res;
+    }
+
+    friend matr operator*(double k, const matr& m);
+
+    vect operator*(const vect& v) const {
+        if (cols != v.dim) throw invalid_argument("Matrix-Vector multiplication dimensions mismatch!");
+        vect res(rows);
+        for (int i = 0; i < rows; ++i)
+            for (int j = 0; j < cols; ++j)
+                res.b[i] += a[i][j] * v.b[j];
+        cout << "Matrix #" << num << " * Vector #" << v.num << " = Vector #" << res.num << endl;
+        return res;
+    }
+
+private:
+    void check_dim(const matr& m) const {
+        if (rows != m.rows || cols != m.cols) throw invalid_argument("Matrix dimensions mismatch!");
     }
 };
 
+matr operator*(double k, const matr& m) {
+    return m * k;
+}
+
 int matr::count = 0;
 
+// Пример использования
 int main() {
-    vect v1(3); // Создается вектор #1
-    vect v2(3); // Создается вектор #2
-    vect v3 = v1 + v2; // Создается вектор #3
+    vect v1(2), v2(2);
+    v1 = v1 + v2;
+    v1 = -v1;
+    double scalar = v1 * v2;
 
-    matr m1(2, 2); // Создается матрица #1
+    matr m1(2, 2), m2(2, 2);
+    matr m3 = m1 + m2;
+    matr m4 = m1 * m2;
+    vect v3 = m1 * v1;
+
     return 0;
 }
+
