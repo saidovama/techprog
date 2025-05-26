@@ -1,0 +1,216 @@
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <string>
+#include <algorithm>
+#include <windows.h> 
+
+using namespace std;
+
+// Класс Student 
+class Student {
+public:
+    string lastName;
+    string firstName;
+    string group;
+    double averageGrade;
+};
+
+class StudentDatabase {
+private:
+    string filename;
+    vector<Student> students;
+
+    // Преобразование строки в объект Student
+    Student parseStudent(const string& line) {
+        Student s;
+        size_t pos1 = line.find(' ');
+        size_t pos2 = line.find(' ', pos1 + 1);
+        size_t pos3 = line.find(' ', pos2 + 1);
+
+        if (pos1 != string::npos && pos2 != string::npos && pos3 != string::npos) {
+            s.lastName = line.substr(0, pos1);
+            s.firstName = line.substr(pos1 + 1, pos2 - pos1 - 1);
+            s.group = line.substr(pos2 + 1, pos3 - pos2 - 1);
+            s.averageGrade = stod(line.substr(pos3 + 1));
+        }
+        return s;
+    }
+
+    // Преобразование объекта Student в строку
+    string studentToString(const Student& s) {
+        return s.lastName + " " + s.firstName + " " + s.group + " " + to_string(s.averageGrade);
+    }
+
+public:
+    StudentDatabase(const string& dbFilename) : filename(dbFilename) {}
+
+    // Добавить студента
+    void addStudent(const Student& student) {
+        students.push_back(student);
+        cout << "Студент добавлен в базу данных." << endl;
+    }
+
+    // Сохранить всех студентов в файл
+    void saveToFile() {
+        ofstream outFile(filename);
+        if (!outFile) {
+            cerr << "Ошибка открытия файла для записи!" << endl;
+            return;
+        }
+
+        for (const auto& student : students) {
+            outFile << studentToString(student) << endl;
+        }
+
+        outFile.close();
+        cout << "Данные сохранены в файл: " << filename << endl;
+    }
+
+    // Загрузить студентов из файла
+    void loadFromFile() {
+        students.clear();
+        ifstream inFile(filename);
+
+        if (!inFile) {
+            cerr << "Файл базы данных не найден!" << endl;
+            return;
+        }
+
+        string line;
+        while (getline(inFile, line)) {
+            if (!line.empty()) {
+                students.push_back(parseStudent(line));
+            }
+        }
+
+        inFile.close();
+        cout << "Данные загружены из файла: " << filename << endl;
+    }
+
+    // Обновить данные студента
+    bool updateStudent(const string& lastName, const Student& newStudent) {
+        auto it = find_if(students.begin(), students.end(),
+            [&lastName](const Student& s) { return s.lastName == lastName; });
+
+        if (it != students.end()) {
+            *it = newStudent;
+            cout << "Данные студента обновлены." << endl;
+            return true;
+        }
+
+        cout << "Студент с такой фамилией не найден." << endl;
+        return false;
+    }
+
+    // Удалить студента
+    bool deleteStudent(const string& lastName) {
+        auto it = find_if(students.begin(), students.end(),
+            [&lastName](const Student& s) { return s.lastName == lastName; });
+
+        if (it != students.end()) {
+            students.erase(it);
+            cout << "Студент удален из базы данных." << endl;
+            return true;
+        }
+
+        cout << "Студент с такой фамилией не найден." << endl;
+        return false;
+    }
+
+    // Показать всех студентов
+    void displayAllStudents() const {
+        if (students.empty()) {
+            cout << "В базе данных нет студентов." << endl;
+            return;
+        }
+
+        cout << "\nСписок всех студентов:" << endl;
+        cout << "Фамилия\tИмя\tГруппа\tСредний балл" << endl;
+        cout << "----------------------------------" << endl;
+
+        for (const auto& student : students) {
+            cout << student.lastName << "\t"
+                << student.firstName << "\t"
+                << student.group << "\t"
+                << student.averageGrade << endl;
+        }
+    }
+};
+
+// Функция для ввода данных студента
+Student inputStudent() {
+    Student s;
+    cout << "\nВведите данные студента:" << endl;
+    cout << "Фамилия: ";
+    cin >> s.lastName;
+    cout << "Имя: ";
+    cin >> s.firstName;
+    cout << "Группа: ";
+    cin >> s.group;
+    cout << "Средний балл: ";
+    cin >> s.averageGrade;
+    cin.ignore(); // Очистка буфера ввода
+    return s;
+}
+
+int main() {
+    SetConsoleCP(1251);
+    SetConsoleOutputCP(1251);
+
+    StudentDatabase db("students_db.txt");
+    int choice;
+
+    while (true) {
+        cout << "\nМеню:" << endl;
+        cout << "1. Добавить студента" << endl;
+        cout << "2. Сохранить в файл" << endl;
+        cout << "3. Загрузить из файла" << endl;
+        cout << "4. Обновить данные студента" << endl;
+        cout << "5. Удалить студента" << endl;
+        cout << "6. Показать всех студентов" << endl;
+        cout << "7. Выход" << endl;
+        cout << "Выберите действие: ";
+        cin >> choice;
+        cin.ignore();
+
+        switch (choice) {
+        case 1: {
+            Student s = inputStudent();
+            db.addStudent(s);
+            break;
+        }
+        case 2:
+            db.saveToFile();
+            break;
+        case 3:
+            db.loadFromFile();
+            break;
+        case 4: {
+            string lastName;
+            cout << "Введите фамилию студента для обновления: ";
+            cin >> lastName;
+            Student newStudent = inputStudent();
+            db.updateStudent(lastName, newStudent);
+            break;
+        }
+        case 5: {
+            string lastName;
+            cout << "Введите фамилию студента для удаления: ";
+            cin >> lastName;
+            db.deleteStudent(lastName);
+            break;
+        }
+        case 6:
+            db.displayAllStudents();
+            break;
+        case 7:
+            cout << "Выход из программы." << endl;
+            return 0;
+        default:
+            cout << "Неверный выбор. Попробуйте снова." << endl;
+        }
+    }
+
+    return 0;
+}
