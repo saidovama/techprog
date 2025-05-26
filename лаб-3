@@ -1,0 +1,244 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+using namespace std;
+
+// Абстрактный базовый класс Точка
+class Point {
+protected:
+    double x, y;
+public:
+    Point(double x = 0, double y = 0) : x(x), y(y) {}
+    virtual ~Point() {}
+    
+    // Чисто виртуальные методы (делаем класс абстрактным)
+    virtual void draw() const = 0;
+    virtual void erase() const = 0;
+    
+    void move(double dx, double dy) {
+        x += dx;
+        y += dy;
+        cout << "Точка перемещена в (" << x << ", " << y << ")" << endl;
+    }
+    
+    double getX() const { return x; }
+    double getY() const { return y; }
+    
+    virtual void printInfo() const {
+        cout << "Точка (" << x << ", " << y << ")";
+    }
+};
+
+// Класс Линия
+class Line : public Point {
+protected:
+    double x2, y2;
+public:
+    Line(double x1, double y1, double x2, double y2) 
+        : Point(x1, y1), x2(x2), y2(y2) {}
+    
+    void draw() const override {
+        cout << "Рисуем линию из (" << x << ", " << y 
+             << ") в (" << x2 << ", " << y2 << ")" << endl;
+    }
+    
+    void erase() const override {
+        cout << "Стираем линию из (" << x << ", " << y 
+             << ") в (" << x2 << ", " << y2 << ")" << endl;
+    }
+    
+    void move(double dx, double dy) {
+        Point::move(dx, dy);
+        x2 += dx;
+        y2 += dy;
+    }
+    
+    void rotate(double angle) {
+        double cx = (x + x2) / 2;
+        double cy = (y + y2) / 2;
+        
+        // Перенос в начало координат
+        x -= cx; y -= cy;
+        x2 -= cx; y2 -= cy;
+        
+        // Поворот
+        double rad = angle * M_PI / 180;
+        double newX = x * cos(rad) - y * sin(rad);
+        double newY = x * sin(rad) + y * cos(rad);
+        double newX2 = x2 * cos(rad) - y2 * sin(rad);
+        double newY2 = x2 * sin(rad) + y2 * cos(rad);
+        
+        // Обратный перенос
+        x = newX + cx; y = newY + cy;
+        x2 = newX2 + cx; y2 = newY2 + cy;
+        
+        cout << "Линия повернута на " << angle << " градусов" << endl;
+    }
+    
+    void printInfo() const override {
+        cout << "Линия [(" << x << ", " << y << "), (" 
+             << x2 << ", " << y2 << ")]" << endl;
+    }
+};
+
+// Базовый класс для четырехугольников (виртуальное наследование)
+class Quadrilateral : virtual public Point {
+protected:
+    double side1, side2;
+    double angle;
+public:
+    Quadrilateral(double x, double y, double s1, double s2, double a) 
+        : Point(x, y), side1(s1), side2(s2), angle(a) {}
+    
+    virtual ~Quadrilateral() {}
+    
+    virtual void draw() const = 0;
+    virtual void erase() const = 0;
+    
+    void rotate(double a) {
+        angle += a;
+        cout << "Фигура повернута на " << a << " градусов. Текущий угол: " << angle << endl;
+    }
+    
+    virtual void printInfo() const {
+        cout << "Четырехугольник с центром в (" << x << ", " << y 
+             << "), сторонами " << side1 << " и " << side2 
+             << ", угол " << angle << " градусов" << endl;
+    }
+};
+
+// Класс Параллелограмм
+class Parallelogram : virtual public Quadrilateral {
+public:
+    Parallelogram(double x, double y, double s1, double s2, double a) 
+        : Point(x, y), Quadrilateral(x, y, s1, s2, a) {}
+    
+    void draw() const override {
+        cout << "Рисуем параллелограмм с центром в (" << x << ", " << y 
+             << "), сторонами " << side1 << " и " << side2 
+             << ", угол " << angle << " градусов" << endl;
+    }
+    
+    void erase() const override {
+        cout << "Стираем параллелограмм с центром в (" << x << ", " << y 
+             << "), сторонами " << side1 << " и " << side2 
+             << ", угол " << angle << " градусов" << endl;
+    }
+    
+    void printInfo() const override {
+        cout << "Параллелограмм [центр (" << x << ", " << y 
+             << "), стороны " << side1 << ", " << side2 
+             << ", угол " << angle << "]" << endl;
+    }
+};
+
+// Класс Прямоугольник
+class Rectangle : public Parallelogram {
+public:
+    Rectangle(double x, double y, double width, double height) 
+        : Point(x, y), Quadrilateral(x, y, width, height, 90), 
+          Parallelogram(x, y, width, height, 90) {}
+    
+    void draw() const override {
+        cout << "Рисуем прямоугольник с центром в (" << x << ", " << y 
+             << "), шириной " << side1 << " и высотой " << side2 << endl;
+    }
+    
+    void erase() const override {
+        cout << "Стираем прямоугольник с центром в (" << x << ", " << y 
+             << "), шириной " << side1 << " и высотой " << side2 << endl;
+    }
+    
+    void printInfo() const override {
+        cout << "Прямоугольник [центр (" << x << ", " << y 
+             << "), размер " << side1 << " x " << side2 << "]" << endl;
+    }
+};
+
+// Класс Ромб
+class Rhombus : public Parallelogram {
+public:
+    Rhombus(double x, double y, double side, double angle) 
+        : Point(x, y), Quadrilateral(x, y, side, side, angle), 
+          Parallelogram(x, y, side, side, angle) {}
+    
+    void draw() const override {
+        cout << "Рисуем ромб с центром в (" << x << ", " << y 
+             << "), стороной " << side1 << ", угол " << angle << " градусов" << endl;
+    }
+    
+    void erase() const override {
+        cout << "Стираем ромб с центром в (" << x << ", " << y 
+             << "), стороной " << side1 << ", угол " << angle << " градусов" << endl;
+    }
+    
+    void printInfo() const override {
+        cout << "Ромб [центр (" << x << ", " << y 
+             << "), сторона " << side1 << ", угол " << angle << "]" << endl;
+    }
+};
+
+// Класс Квадрат (наследуется от Ромба и Прямоугольника)
+class Square : public Rhombus, public Rectangle {
+public:
+    Square(double x, double y, double side) 
+        : Point(x, y), 
+          Quadrilateral(x, y, side, side, 90),
+          Rhombus(x, y, side, 90), 
+          Rectangle(x, y, side, side) {}
+    
+    void draw() const override {
+        cout << "Рисуем квадрат с центром в (" << x << ", " << y 
+             << "), стороной " << side1 << endl;
+    }
+    
+    void erase() const override {
+        cout << "Стираем квадрат с центром в (" << x << ", " << y 
+             << "), стороной " << side1 << endl;
+    }
+    
+    void printInfo() const override {
+        cout << "Квадрат [центр (" << x << ", " << y 
+             << "), сторона " << side1 << "]" << endl;
+    }
+};
+
+// Демонстрация работы с геометрическими объектами
+void demonstrateGeometry() {
+    vector<Point*> shapes;
+    
+    // Создаем различные фигуры
+    shapes.push_back(new Line(0, 0, 10, 10));
+    shapes.push_back(new Parallelogram(5, 5, 4, 6, 45));
+    shapes.push_back(new Rectangle(2, 2, 5, 3));
+    shapes.push_back(new Rhombus(3, 3, 4, 60));
+    shapes.push_back(new Square(4, 4, 5));
+    
+    // Демонстрация работы методов
+    for (auto shape : shapes) {
+        shape->draw();
+        shape->move(1, 1);
+        shape->printInfo();
+        
+        // Пытаемся вызвать rotate (если метод существует)
+        if (auto line = dynamic_cast<Line*>(shape)) {
+            line->rotate(45);
+        }
+        else if (auto quad = dynamic_cast<Quadrilateral*>(shape)) {
+            quad->rotate(15);
+        }
+        
+        shape->erase();
+        cout << "---------------------" << endl;
+    }
+    
+    // Очистка памяти
+    for (auto shape : shapes) {
+        delete shape;
+    }
+}
+
+int main() {
+    demonstrateGeometry();
+    return 0;
+}
