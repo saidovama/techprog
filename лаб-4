@@ -1,216 +1,127 @@
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <vector>
 #include <string>
-#include <algorithm>
-#include <windows.h> 
 
-using namespace std;
-
-// Класс Student 
 class Student {
 public:
-    string lastName;
-    string firstName;
-    string group;
-    double averageGrade;
+    int         id;
+    std::string name;
+    double      grade;
+    int         age;
+    std::string major;
 };
 
-class StudentDatabase {
-private:
-    string filename;
-    vector<Student> students;
-
-    // Преобразование строки в объект Student
-    Student parseStudent(const string& line) {
-        Student s;
-        size_t pos1 = line.find(' ');
-        size_t pos2 = line.find(' ', pos1 + 1);
-        size_t pos3 = line.find(' ', pos2 + 1);
-
-        if (pos1 != string::npos && pos2 != string::npos && pos3 != string::npos) {
-            s.lastName = line.substr(0, pos1);
-            s.firstName = line.substr(pos1 + 1, pos2 - pos1 - 1);
-            s.group = line.substr(pos2 + 1, pos3 - pos2 - 1);
-            s.averageGrade = stod(line.substr(pos3 + 1));
-        }
-        return s;
-    }
-
-    // Преобразование объекта Student в строку
-    string studentToString(const Student& s) {
-        return s.lastName + " " + s.firstName + " " + s.group + " " + to_string(s.averageGrade);
-    }
-
-public:
-    StudentDatabase(const string& dbFilename) : filename(dbFilename) {}
-
-    // Добавить студента
-    void addStudent(const Student& student) {
-        students.push_back(student);
-        cout << "Студент добавлен в базу данных." << endl;
-    }
-
-    // Сохранить всех студентов в файл
-    void saveToFile() {
-        ofstream outFile(filename);
-        if (!outFile) {
-            cerr << "Ошибка открытия файла для записи!" << endl;
-            return;
-        }
-
-        for (const auto& student : students) {
-            outFile << studentToString(student) << endl;
-        }
-
-        outFile.close();
-        cout << "Данные сохранены в файл: " << filename << endl;
-    }
-
-    // Загрузить студентов из файла
-    void loadFromFile() {
-        students.clear();
-        ifstream inFile(filename);
-
-        if (!inFile) {
-            cerr << "Файл базы данных не найден!" << endl;
-            return;
-        }
-
-        string line;
-        while (getline(inFile, line)) {
-            if (!line.empty()) {
-                students.push_back(parseStudent(line));
-            }
-        }
-
-        inFile.close();
-        cout << "Данные загружены из файла: " << filename << endl;
-    }
-
-    // Обновить данные студента
-    bool updateStudent(const string& lastName, const Student& newStudent) {
-        auto it = find_if(students.begin(), students.end(),
-            [&lastName](const Student& s) { return s.lastName == lastName; });
-
-        if (it != students.end()) {
-            *it = newStudent;
-            cout << "Данные студента обновлены." << endl;
-            return true;
-        }
-
-        cout << "Студент с такой фамилией не найден." << endl;
-        return false;
-    }
-
-    // Удалить студента
-    bool deleteStudent(const string& lastName) {
-        auto it = find_if(students.begin(), students.end(),
-            [&lastName](const Student& s) { return s.lastName == lastName; });
-
-        if (it != students.end()) {
-            students.erase(it);
-            cout << "Студент удален из базы данных." << endl;
-            return true;
-        }
-
-        cout << "Студент с такой фамилией не найден." << endl;
-        return false;
-    }
-
-    // Показать всех студентов
-    void displayAllStudents() const {
-        if (students.empty()) {
-            cout << "В базе данных нет студентов." << endl;
-            return;
-        }
-
-        cout << "\nСписок всех студентов:" << endl;
-        cout << "Фамилия\tИмя\tГруппа\tСредний балл" << endl;
-        cout << "----------------------------------" << endl;
-
-        for (const auto& student : students) {
-            cout << student.lastName << "\t"
-                << student.firstName << "\t"
-                << student.group << "\t"
-                << student.averageGrade << endl;
-        }
-    }
-};
-
-// Функция для ввода данных студента
-Student inputStudent() {
-    Student s;
-    cout << "\nВведите данные студента:" << endl;
-    cout << "Фамилия: ";
-    cin >> s.lastName;
-    cout << "Имя: ";
-    cin >> s.firstName;
-    cout << "Группа: ";
-    cin >> s.group;
-    cout << "Средний балл: ";
-    cin >> s.averageGrade;
-    cin.ignore(); // Очистка буфера ввода
-    return s;
+// Студент в вектор
+void addStudent(std::vector<Student>& v, const Student& s) {
+    v.push_back(s);
 }
 
-int main() {
-    SetConsoleCP(1251);
-    SetConsoleOutputCP(1251);
-
-    StudentDatabase db("students_db.txt");
-    int choice;
-
-    while (true) {
-        cout << "\nМеню:" << endl;
-        cout << "1. Добавить студента" << endl;
-        cout << "2. Сохранить в файл" << endl;
-        cout << "3. Загрузить из файла" << endl;
-        cout << "4. Обновить данные студента" << endl;
-        cout << "5. Удалить студента" << endl;
-        cout << "6. Показать всех студентов" << endl;
-        cout << "7. Выход" << endl;
-        cout << "Выберите действие: ";
-        cin >> choice;
-        cin.ignore();
-
-        switch (choice) {
-        case 1: {
-            Student s = inputStudent();
-            db.addStudent(s);
-            break;
-        }
-        case 2:
-            db.saveToFile();
-            break;
-        case 3:
-            db.loadFromFile();
-            break;
-        case 4: {
-            string lastName;
-            cout << "Введите фамилию студента для обновления: ";
-            cin >> lastName;
-            Student newStudent = inputStudent();
-            db.updateStudent(lastName, newStudent);
-            break;
-        }
-        case 5: {
-            string lastName;
-            cout << "Введите фамилию студента для удаления: ";
-            cin >> lastName;
-            db.deleteStudent(lastName);
-            break;
-        }
-        case 6:
-            db.displayAllStudents();
-            break;
-        case 7:
-            cout << "Выход из программы." << endl;
-            return 0;
-        default:
-            cout << "Неверный выбор. Попробуйте снова." << endl;
-        }
+// Сохранить в файл
+void saveToFile(const std::vector<Student>& v, const std::string& filename) {
+    std::ofstream ofs(filename);
+    for (const auto& s : v) {
+        ofs << s.id << ' '
+            << s.name << ' '
+            << s.grade << ' '
+            << s.age << ' '
+            << s.major << '\n';
     }
+}
+
+// Загрузить из файла (очистка и чтение)
+void loadFromFile(std::vector<Student>& v, const std::string& filename) {
+    v.clear();
+    std::ifstream ifs(filename);
+    std::string line;
+    while (std::getline(ifs, line)) {
+        std::istringstream iss(line);
+        Student s;
+        iss >> s.id >> s.name >> s.grade >> s.age >> s.major;
+        v.push_back(s);
+    }
+}
+
+// Обновить по индексу
+void updateStudent(std::vector<Student>& v, int idx, const Student& newData) {
+    if (idx < v.size()) {
+        v[idx] = newData;
+    }
+}
+
+// Удалить по индексу
+void removeStudent(std::vector<Student>& v, int idx) {
+    if (idx < v.size()) {
+        v.erase(v.begin() + idx);
+    }
+}
+
+// Очистить вектор
+void clearAll(std::vector<Student>& v) {
+    v.clear();
+}
+
+// Вывод в консольку
+void printAll(const std::vector<Student>& v, const std::string& header = "") {
+    if (!header.empty()) {
+        std::cout << header << "\n";
+    }
+    for (int i = 0; i < v.size(); ++i) {
+        const auto& s = v[i];
+        std::cout << '[' << i << "] "
+                  << "ID=" << s.id << ", "
+                  << "Name=" << s.name << ", "
+                  << "Grade=" << s.grade << ", "
+                  << "Age=" << s.age << ", "
+                  << "Major=" << s.major << "\n";
+    }
+    std::cout << std::endl;
+}
+
+int main() 
+{
+    const std::string filename = "db.txt";
+    std::vector<Student> students;
+
+    // Начинаем с пустого файла и вектора
+    clearAll(students);
+    saveToFile(students, filename);
+
+    // Добавляем в класс
+    addStudent(students, Student{1, "Alice", 85.5, 20, "Physics"});
+    addStudent(students, Student{2, "Bob",   91.0, 21, "Mathematics"});
+    addStudent(students, Student{3, "Carol", 78.0, 19, "ComputerScience"});
+    printAll(students, "После добавления 3х студентов:");
+
+    // Сохраняем в файл
+    saveToFile(students, filename);
+    std::cout << "Сохранили в " << filename << "\n\n";
+
+    // Очищаем память
+    clearAll(students);
+    printAll(students, "После отчистки вектора:");
+
+    // Загружаем из файла
+    loadFromFile(students, filename);
+    printAll(students, "После загрузки из файла: ");
+
+    // Обновляем элемент (1)
+    updateStudent(students, 1, Student{2, "Bobby", 93.2, 21, "Mathematics"});
+    printAll(students, "После обнавления элемента на индексе 1:");
+
+    // Добавляем ещё элемент
+    addStudent(students, Student{4, "Dave", 88.8, 22, "Engineering"});
+    printAll(students, "После добавления нового элемента:");
+
+    // Удаляем элементы(первый и последний)
+    removeStudent(students, 0);
+    removeStudent(students, students.size() - 1);
+    printAll(students, "После удаления первого и последнего элемента:");
+
+    // Сохраняем в файл
+    saveToFile(students, filename);
+    std::cout << "Сохранили в файл" << filename << "\n";
 
     return 0;
 }
